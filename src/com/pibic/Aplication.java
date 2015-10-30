@@ -16,7 +16,6 @@ public class Aplication {
 
 			}
 		});
-
 	}
 
 	// model interface

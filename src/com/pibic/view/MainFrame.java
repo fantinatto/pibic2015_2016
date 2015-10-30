@@ -23,16 +23,18 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpringLayout;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
 import com.pibic.controller.Controller;
-import com.pibic.controller.DirListener;
+import com.pibic.controller.Diretorios;
 import com.pibic.model.Model;
-
+import java.awt.BorderLayout;
 
 public class MainFrame extends JFrame implements ActionListener {
+
+	// COntroleer
+	private Diretorios allDir;
 
 	// corpo
 	private JTabbedPane bodyPane;
@@ -40,7 +42,6 @@ public class MainFrame extends JFrame implements ActionListener {
 	private JMenuBar menuBar;
 	private JMenu mnHelp;
 	private JMenuItem mFile;
-	
 
 	// Model to View
 	private Model model;
@@ -55,10 +56,6 @@ public class MainFrame extends JFrame implements ActionListener {
 	private JPanel ferramentasPanel;
 	private JPanel consolePanel;
 	private JButton taxonomiaBtn;
-	private JScrollPane scrolltab;
-
-	// flag para habilitação da generalização
-	private boolean fRedundantes = false, fTaxonomia = false;
 
 	// numero de tabs
 	private int numTelas = 0;
@@ -103,7 +100,6 @@ public class MainFrame extends JFrame implements ActionListener {
 				display.setFont(new Font("Monospaced", Font.BOLD, 13));
 				display.setEditable(false); // set textArea non-editable
 
-				
 				scrollPane = new JScrollPane(display);
 				scrollPane
 						.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -131,53 +127,55 @@ public class MainFrame extends JFrame implements ActionListener {
 			springLayout.putConstraint(SpringLayout.SOUTH, ferramentasPanel,
 					-10, SpringLayout.SOUTH, getContentPane());
 			getContentPane().add(ferramentasPanel);
-			
+
 			{
-				taxonomiaBtn = new JButton("1");
-				taxonomiaBtn.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent arg0) {
-						display.append("Abra o arquivo de taxonomia! \n");
-						JFileChooser jf = new JFileChooser("base");
-						// seleciona um arquivo por vez
-						jf.setMultiSelectionEnabled(false);
-						// mostra janela para secelionar file
-						int escolha = jf.showOpenDialog(null);
-
-						// tratando janela cancelada
-						if (escolha == JFileChooser.CANCEL_OPTION) {
-
-						} else {
-							
-						}
-
-					}
-				});
-				ferramentasPanel.add(taxonomiaBtn, "2, 2");
+				ferramentasPanel.setLayout(new BorderLayout(0, 0));
 			}
+			
+			JPanel panel = new JPanel();
+			ferramentasPanel.add(panel, BorderLayout.NORTH);
+			taxonomiaBtn = new JButton("Diretório");
+			panel.add(taxonomiaBtn);
 			{
-				btnRegrasDeAssociao = new JButton(
-						"2");
+				btnRegrasDeAssociao = new JButton("KNN");
+				panel.add(btnRegrasDeAssociao);
+				
+				JPanel basePanel = new JPanel();
+				ferramentasPanel.add(basePanel, BorderLayout.SOUTH);
 				btnRegrasDeAssociao.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent arg0) {
-						display.append("Carregue o Arquivo de Regras de Associação! Ex:. A <- P (30.0% , 100.00%) \n");
-						JFileChooser jf = new JFileChooser("base");
-						// seleciona um arquivo por vez
-						jf.setMultiSelectionEnabled(false);
-						// mostra janela para secelionar file
-						int escolha = jf.showOpenDialog(null);
-
-						// tratando janela cancelada
-						if (escolha == JFileChooser.CANCEL_OPTION) {
-
-						} else {
-							
-						}
-
+						display.append("Iniciando KNN \n");
+						
 					}
 				});
-				ferramentasPanel.add(btnRegrasDeAssociao, "2, 6");
 			}
+			taxonomiaBtn.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					display.append("Selecione o diretorio da base! \n");
+					JFileChooser fc = new JFileChooser("base");
+					fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+					fc.setMultiSelectionEnabled(false);
+					int escolha = fc.showOpenDialog(null);
+					// tratando janela cancelada
+					if (escolha == JFileChooser.CANCEL_OPTION) {
+
+					} else {
+						// organiza pastas conforme diretorio
+						allDir = new Diretorios(fc.getSelectedFile()
+								.getPath());
+
+						BaseDadosPanel nnn = new BaseDadosPanel(display,
+								allDir);
+						numTelas++;
+
+						bodyPane.add("Base de Dados", nnn);
+						bodyPane.setSelectedIndex(numTelas);
+
+					}
+
+				}
+			});
 		}
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
@@ -217,13 +215,12 @@ public class MainFrame extends JFrame implements ActionListener {
 					JOptionPane
 							.showMessageDialog(
 									null,
-									"GREEN.TX foi desenvolvido durante o Trabalho de Conclusão de Curso, " +
-									"\nna Pontifícia Universidade Católica do Paraná, dentro do Curso de  "+
-											"\nBacharelado em Ciência da Computação."
+									"GREEN.TX foi desenvolvido durante o Trabalho de Conclusão de Curso, "
+											+ "\nna Pontifícia Universidade Católica do Paraná, dentro do Curso de  "
+											+ "\nBacharelado em Ciência da Computação."
 											+ " \n\nCréditos \nVinícius Fantinatto de Medeiros "
-											+ "\nDra. Deborah Ribeiro Carvalho"+
-											"\noutubro - 2015",
-									"" + "Sobre",
+											+ "\nDra. Deborah Ribeiro Carvalho"
+											+ "\noutubro - 2015", "" + "Sobre",
 									JOptionPane.INFORMATION_MESSAGE);
 				}
 			});
@@ -247,16 +244,16 @@ public class MainFrame extends JFrame implements ActionListener {
 			public void actionPerformed(ActionEvent e) {
 				Process pro;
 				try {
-					java.awt.Desktop.getDesktop().open( new File( "Manual GreenTx.pdf" ) ); 
-										
+					java.awt.Desktop.getDesktop().open(
+							new File("Manual GreenTx.pdf"));
+
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
-				} 
-				  
-				
-				//Abrir o Arquivo do Manual Aqui
-				//&&&&
+				}
+
+				// Abrir o Arquivo do Manual Aqui
+				// &&&&
 			}
 		}
 		mFile.addActionListener(new MenuItemListener());
